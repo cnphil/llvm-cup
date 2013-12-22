@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Referenced Libraries"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/Users/phil/Developer/llvm-cup/SmallC-4/bin/smallc/parser/java-cup-11a.jar"/>
+	<classpathentry kind="lib" path="/Users/phil/Developer/llvm-cup/SmallC-4/bin/smallc/parser/JFlex.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

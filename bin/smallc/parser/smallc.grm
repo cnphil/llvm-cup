@@ -1,0 +1,205 @@
+package smallc.parser;
+
+import java.io.InputStream;
+import smallc.parser.ast.*;
+
+action code {:
+    static Symbol symbol(String s) {
+        return Symbol.symbol(s);
+    }
+:};
+
+parser code {:
+    public Parser(InputStream in) {
+        this(new Lexer(in));
+    }
+:};
+
+terminal IF, ELSE, CONTINUE, BREAK, FOR, RETURN, STRUCT, TYPE;
+terminal SEMI, COMMA, DOT, LP, RP, LB, RB, LC, RC;
+terminal AS, AA, SA, MA, DA, BAA, BXA, BOA, SLA, SRA;
+terminal SL, SR;
+terminal GE, GT, LE, LT, EQ, NE;
+terminal LN, LA, LO;
+terminal BN, BA, BO, BX;
+terminal UM, PI, PD, MUL, DIV, MOD, ADD, SUB;
+terminal String ID;
+terminal Integer INT;
+
+non terminal Program PROGRAM;
+non terminal Extdefs EXTDEFS;
+non terminal Extdef EXTDEF;
+non terminal Extvars EXTVARS;
+non terminal Spec SPEC;
+non terminal Stspec STSPEC;
+non terminal Opttag OPTTAG;
+non terminal Var VAR;
+non terminal Func FUNC;
+non terminal Paras PARAS;
+non terminal Para PARA;
+non terminal Stmtblock STMTBLOCK;
+non terminal Stmts STMTS;
+non terminal Stmt STMT;
+non terminal Estmt ESTMT;
+non terminal Defs DEFS;
+non terminal Def DEF;
+non terminal Decs DECS;
+non terminal Dec DEC;
+non terminal Init INIT;
+non terminal Exp EXP;
+non terminal Arrs ARRS;
+non terminal Args ARGS;
+
+
+precedence right INT, ID, IF, ELSE, CONTINUE, BREAK, FOR, RETURN, STRUCT, TYPE;
+precedence right AS, AA, SA, MA, DA, BAA, BXA, BOA, SLA, SRA;
+precedence left LO;
+precedence left LA;
+precedence left BO;
+precedence left BX;
+precedence left BA;
+precedence left EQ, NE;
+precedence left GT, GE, LT, LE;
+precedence left SL, SR;
+precedence left ADD, SUB;
+precedence left MUL, DIV, MOD;
+precedence right UM, LN, PI, PD, BN;
+precedence right LP,LB;
+precedence left DOT, RP, RB;
+
+
+
+
+start with PROGRAM;
+
+PROGRAM ::= EXTDEFS:extdefs {: RESULT = new Program(extdefs); :}
+          ;
+          
+EXTDEFS ::= EXTDEF:extdef EXTDEFS:extdefs {: RESULT = new Extdefs1(extdef,extdefs); :}
+	      | {: RESULT = new Extdefs2(); :}
+	      ;
+	      
+EXTDEF  ::= SPEC:spec EXTVARS:extvars SEMI {: RESULT = new Extdef1(spec, extvars); :}
+          | SPEC:spec FUNC:func STMTBLOCK:stmtblock {: RESULT = new Extdef2(spec, func, stmtblock); :}
+          ;
+          
+EXTVARS ::= DEC:dec {: RESULT = new Extvars1(dec); :}
+          | DEC:dec COMMA EXTVARS:extvars {: RESULT = new Extvars2(dec, extvars); :}
+          |{: RESULT = new Extvars3(); :}
+          ;
+          
+SPEC    ::= TYPE {: RESULT = new Spec1(); :}
+          | STSPEC:stspec {: RESULT = new Spec2(stspec); :}
+          ;
+          
+STSPEC  ::= STRUCT OPTTAG:opttag LC DEFS:defs RC {: RESULT = new Stspec1(opttag, defs); :}
+          | STRUCT ID:id {: RESULT = new Stspec2(symbol(id)); :}
+          ;
+          
+OPTTAG  ::= ID:id {: RESULT = new Opttag1(symbol(id)); :}
+          | {: RESULT = new Opttag2(); :}
+          ;
+          
+VAR     ::= ID:id {: RESULT = new Var1(symbol(id)); :}
+          | VAR:var LB INT:num RB {: RESULT = new Var2(var, num.intValue()); :}
+          ;
+          
+FUNC    ::= ID:id LP PARAS:paras RP {: RESULT = new Func(symbol(id),paras); :}
+          ;
+          
+PARAS   ::= PARA:para COMMA PARAS:paras {: RESULT = new Paras1(para, paras); :}
+          | PARA:para {: RESULT = new Paras2(para); :}
+          | {: RESULT = new Paras3(); :}
+          ;
+          
+PARA    ::= SPEC:spec VAR:var {: RESULT = new Para(spec, var); :}
+          ;
+          
+STMTBLOCK ::= LC DEFS:defs STMTS:stmts RC {: RESULT = new Stmtblock(defs, stmts); :}
+            ;
+            
+STMTS   ::= STMT:stmt STMTS:stmts {: RESULT = new Stmts1(stmt,stmts); :}
+          | {: RESULT = new Stmts2(); :}
+          ;
+          
+STMT    ::= EXP:exp SEMI {: RESULT = new Stmt1(exp); :}
+          | STMTBLOCK:stmtblock {: RESULT = new Stmt2(stmtblock); :}
+          | RETURN EXP:exp SEMI {: RESULT = new Stmt3(exp); :}
+          | IF LP EXP:exp RP STMT:stmt ESTMT:estmt {: RESULT = new Stmt4(exp,stmt,estmt); :}
+          | FOR LP EXP:exp1 SEMI EXP:exp2 SEMI EXP:exp3 RP STMT:stmt {: RESULT = new Stmt5(exp1,exp2,exp3,stmt); :}
+          | CONTINUE SEMI{: RESULT = new Stmt6(); :}
+          | BREAK SEMI{: RESULT = new Stmt7(); :}
+          ;
+          
+ESTMT   ::= ELSE STMT:stmt{: RESULT = new Estmt1(stmt); :}
+          | {: RESULT = new Estmt2(); :}
+          ;
+          
+DEFS    ::= DEF:def DEFS:defs {: RESULT = new Defs1(def,defs); :}
+          | {: RESULT = new Defs2(); :}
+          ;
+          
+DEF     ::= SPEC:spec DECS:decs SEMI {: RESULT = new Def(spec,decs); :} 
+          ;
+          
+DECS    ::= DEC:dec COMMA DECS:decs {: RESULT = new Decs1(dec,decs); :}
+          | DEC:dec {: RESULT = new Decs2(dec); :}
+          ;
+          
+DEC     ::= VAR:var {: RESULT = new Dec1(var); :}
+          | VAR:var AS INIT:init {: RESULT = new Dec2(var,init); :}
+          ;
+          
+INIT    ::= EXP:exp {: RESULT = new Init1(exp); :}
+          | LC ARGS:_args RC {: RESULT = new Init2(_args); :} 
+          ;
+          
+EXP     ::= EXP:exp1 MUL EXP:exp2 {: RESULT = new Mul(exp1,exp2); :}
+          | EXP:exp1 DIV EXP:exp2 {: RESULT = new Div(exp1,exp2); :}
+          | EXP:exp1 MOD EXP:exp2 {: RESULT = new Mod(exp1,exp2); :}
+          | EXP:exp1 ADD EXP:exp2 {: RESULT = new Add(exp1,exp2); :}
+          | EXP:exp1 SUB EXP:exp2 {: RESULT = new Sub(exp1,exp2); :}
+          | EXP:exp1 SL EXP:exp2  {: RESULT = new Sl(exp1, exp2); :}
+          | EXP:exp1 SR EXP:exp2  {: RESULT = new Sr(exp1, exp2); :}
+          | EXP:exp1 GT EXP:exp2  {: RESULT = new Gt(exp1, exp2); :}
+          | EXP:exp1 GE EXP:exp2  {: RESULT = new Ge(exp1, exp2); :}
+          | EXP:exp1 LT EXP:exp2  {: RESULT = new Lt(exp1, exp2); :}
+          | EXP:exp1 LE EXP:exp2  {: RESULT = new Le(exp1, exp2); :}
+          | EXP:exp1 EQ EXP:exp2  {: RESULT = new Eq(exp1, exp2); :}
+          | EXP:exp1 NE EXP:exp2  {: RESULT = new Ne(exp1, exp2); :}
+          | EXP:exp1 BA EXP:exp2  {: RESULT = new Ba(exp1, exp2); :}
+          | EXP:exp1 BX EXP:exp2  {: RESULT = new Bx(exp1, exp2); :}
+          | EXP:exp1 BO EXP:exp2  {: RESULT = new Bo(exp1, exp2); :}
+          | EXP:exp1 LA EXP:exp2  {: RESULT = new La(exp1, exp2); :}
+          | EXP:exp1 LO EXP:exp2  {: RESULT = new Lo(exp1, exp2); :}
+          | EXP:exp1 AA EXP:exp2  {: RESULT = new Aa(exp1, exp2); :}
+          | EXP:exp1 SA EXP:exp2  {: RESULT = new Sa(exp1, exp2); :}
+          | EXP:exp1 MA EXP:exp2  {: RESULT = new Ma(exp1, exp2); :}
+          | EXP:exp1 DA EXP:exp2  {: RESULT = new Da(exp1, exp2); :}
+          | EXP:exp1 BAA EXP:exp2 {: RESULT = new Baa(exp1,exp2); :}
+          | EXP:exp1 BXA EXP:exp2 {: RESULT = new Bxa(exp1,exp2); :}
+          | EXP:exp1 BOA EXP:exp2 {: RESULT = new Boa(exp1,exp2); :}
+          | EXP:exp1 SLA EXP:exp2 {: RESULT = new Sla(exp1,exp2); :}
+          | EXP:exp1 SRA EXP:exp2 {: RESULT = new Sra(exp1,exp2); :}
+          | EXP:exp1 AS EXP:exp2  {: RESULT = new As(exp1, exp2); :}
+          | SUB EXP:exp {: RESULT = new Neg(exp); :} %prec UM
+          | LN EXP:exp  {: RESULT = new Ln(exp); :}
+          | PI EXP:exp  {: RESULT = new Pi(exp); :}
+          | PD EXP:exp  {: RESULT = new Pd(exp); :}
+          | BN EXP:exp  {: RESULT = new Bn(exp); :}
+          | LP EXP:exp RP   {: RESULT = new Exp3(exp); :}
+          | ID:id LP ARGS:_args RP {: RESULT = new Exp4(symbol(id),_args); :}
+          | ID:id ARRS:arrs  {: RESULT = new Exp5(symbol(id),arrs); :}
+          | EXP:exp DOT ID:id {: RESULT = new Exp6(exp,symbol(id)); :}
+          | INT:num  {:RESULT = new Exp7(num.intValue()); :}
+          |  {: RESULT = new Exp8(); :}
+          ;
+          
+ARRS    ::= LB EXP:exp RB ARRS:arrs {: RESULT = new Arrs1(exp, arrs); :}
+          | {: RESULT = new Arrs2(); :}
+          ;
+          
+ARGS    ::= EXP:exp COMMA ARGS:_args {: RESULT = new Args1(exp, _args); :}
+          | EXP:exp {: RESULT = new Args2(exp); :}
+          ;
+          
